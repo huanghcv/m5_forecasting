@@ -63,16 +63,18 @@ def create_train_data(train_start=750, test_start=1800, is_train=True):
 def create_feature(sale_data, is_train=True, day=None):
     # 可以在这里加入更多的特征抽取方法
     # 获取7天前的数据，28天前的数据
-    lags = [7, 28]
+    lags = [0, 7, 28]
     lag_cols = [f"lag_{lag}" for lag in lags]
 
     # 如果是测试集只需要计算一天的特征，减少计算量
     # 注意训练集和测试集特征生成要一致
     if is_train:
         for lag, lag_col in zip(lags, lag_cols):
+            # if lag != 0:
             sale_data[lag_col] = sale_data[["id", "sales"]].groupby("id")["sales"].shift(lag)
     else:
         for lag, lag_col in zip(lags, lag_cols):
+            # if lag != 0:
             sale_data.loc[sale_data.date == day, lag_col] = sale_data.loc[
                 sale_data.date == day - timedelta(days=lag), 'sales'].values
 
@@ -116,12 +118,12 @@ sale_data = create_train_data(train_start=1, is_train=True)
 # sale_data.to_csv('tmp1.csv')
 print('start create feature')
 sale_data = create_feature(sale_data)
-cat_feats = ['item_id', 'dept_id','store_id', 'cat_id', 'state_id'] + ["event_name_1", "event_name_2", "event_type_1", "event_type_2"]
+cat_feats = ['item_id', 'dept_id', 'store_id', 'cat_id', 'state_id'] + ["event_name_1", "event_name_2", "event_type_1",
+                                                                        "event_type_2"]
 useless_cols = ["id", "date", "d", "wm_yr_wk", "weekday"]
 train_cols = sale_data.columns[~sale_data.columns.isin(useless_cols)]
 X_train = sale_data[train_cols]
 # y_train = sale_data["sales"]
 with open('train_data.pkl', 'wb') as f:
-    pickle.dump(X_train, f)
-X_train.to_csv('tmp2.csv')
-
+    pickle.dump(sale_data, f)
+# X_train.to_csv('tmp2.csv')
